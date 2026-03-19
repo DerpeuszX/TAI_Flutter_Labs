@@ -1,6 +1,6 @@
 # flutter_lab_4
 
-A new Flutter project.
+Projekt flutter - laboratoria.
 
 ## Getting Started
 
