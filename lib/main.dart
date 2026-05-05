@@ -5,6 +5,63 @@ void main() {
   runApp(MyApp());
 }
 
+// ================= FILTER BAR =================
+class FilterBar extends StatelessWidget {
+  final String selectedFilter;
+  final Function(String) onFilterChanged;
+
+  const FilterBar({
+    super.key,
+    required this.selectedFilter,
+    required this.onFilterChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final filters = ["wszystkie", "do zrobienia", "wykonane"];
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: filters.map((filter) {
+        final isActive = selectedFilter == filter;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: TextButton(
+            style: TextButton.styleFrom(
+              backgroundColor: isActive
+                  ? Colors.deepPurpleAccent
+                  : Colors.transparent,
+              foregroundColor: isActive
+                  ? Colors.white
+                  : Colors.deepPurpleAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(
+                  color: Colors.deepPurpleAccent,
+                  width: isActive ? 0 : 1,
+                ),
+              ),
+            ),
+            onPressed: () {
+              onFilterChanged(filter);
+            },
+            child: Text(
+              filter == "wszystkie"
+                  ? "Wszystkie"
+                  : filter == "do zrobienia"
+                  ? "Do zrobienia"
+                  : "Wykonane",
+              style: TextStyle(
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
 // ================= TASK CARD =================
 class TaskCard extends StatelessWidget {
   final String title;
@@ -102,6 +159,35 @@ class HomeScreen extends StatefulWidget {
 // ================= HOME SCREEN STATE =================
 
 class _HomeScreenState extends State<HomeScreen> {
+  String selectedFilter = "wszystkie"; // aktualnie wybrany filtr
+
+  void _confirmDeleteAllTasks() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Potwierdzenie"),
+          content: const Text("Czy na pewno chcesz usunąć wszystkie zadania?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Anuluj"),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  TaskRepository.tasks.clear();
+                });
+                Navigator.pop(context);
+              },
+              child: const Text("Usuń"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void toggleTaskStatus(int index) {
     setState(() {
       TaskRepository.tasks[index].isDone =
@@ -117,6 +203,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // zmienna pomocnicza przetrzymująca obecnie przefiltrowaną listę
+    List<Task> filteredTasks = TaskRepository.tasks;
+    // logika filtrowania
+    if (selectedFilter == "wykonane") {
+      filteredTasks = TaskRepository.tasks
+          .where((task) => task.isDone)
+          .toList();
+    } else if (selectedFilter == "do zrobienia") {
+      filteredTasks = TaskRepository.tasks
+          .where((task) => !task.isDone)
+          .toList();
+    }
+
     return Scaffold(
       // jest scaffold
       appBar: AppBar(
@@ -125,6 +224,23 @@ class _HomeScreenState extends State<HomeScreen> {
           "KrakFlow",
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () {
+              if (TaskRepository.tasks.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Center(child: Text("Brak zadań do usunięcia!")),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              } else {
+                _confirmDeleteAllTasks();
+              }
+            },
+          ),
+        ],
         centerTitle: true,
         backgroundColor: Colors.deepPurpleAccent,
         foregroundColor: Colors.white,
@@ -151,15 +267,26 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
+            const SizedBox(height: 12),
+            // button row do filtrowania zadan
+            FilterBar(
+              selectedFilter: selectedFilter,
+              onFilterChanged: (newFilter) {
+                setState(() {
+                  selectedFilter = newFilter;
+                });
+              },
+            ),
+
             const SizedBox(height: 18), // spacerS
 
             Expanded(
               // musi byc expanded, inaczej jest problem z renderowaniem takiej listy.
               child: ListView.builder(
                 // lista zadań, zrobiona za pomocą ListView.builder
-                itemCount: TaskRepository.tasks.length,
+                itemCount: filteredTasks.length,
                 itemBuilder: (context, index) {
-                  final task = TaskRepository.tasks[index];
+                  final task = filteredTasks[index];
 
                   return Dismissible(
                     key: ObjectKey(
@@ -207,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                       onTap: () async {
-                        // otwórz ekran edycji (placeholder)
+                        // otwórz ekran edycji
                         final updated = await Navigator.push(
                           context,
                           MaterialPageRoute(
