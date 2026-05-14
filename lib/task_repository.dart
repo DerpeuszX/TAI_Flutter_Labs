@@ -1,47 +1,28 @@
-class Task {
-  final String title;
-  final String deadline;
-  final String priority; // dodalem pole priority
-  bool isDone;
-
-  Task({
-    required this.title,
-    required this.deadline,
-    required this.priority,
-    required this.isDone,
-  });
-}
-
-
+import 'models/task.dart';
 
 class TaskRepository {
-
-
   static List<Task> tasks = [
-    Task(
+    Task.create(
       title: "Zrobić projekt z TAI",
       deadline: "jutro",
       priority: "wysoki",
-      isDone: false,
     ),
-    Task(
+    Task.create(
       title: "Pouczyć się do kolokwium",
       deadline: "dzisiaj",
-      priority: "uber wysoki",
+      priority: "wysoki",
       isDone: true,
     ),
-    Task(
+    Task.create(
       title: "Ogarnąć Fluttera",
       deadline: "w piątek",
       priority: "średni",
-      isDone: false,
     ),
-    Task(
-      title: "Nie mam pomysłu", 
-      deadline: "jutro", 
-      priority: "niski", 
-      isDone: true
+    Task.create(
+      title: "Nie mam pomysłu",
+      deadline: "jutro",
+      priority: "niski",
+      isDone: true,
     ),
   ];
-
 }

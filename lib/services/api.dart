@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '/task_repository.dart';
+import '../models/task.dart';
 
 class Api {
   // pobieramy dane z API i mapujemy je na model listy zadan Task
@@ -40,6 +40,9 @@ class Api {
           // zwracanie gotowej listy zadań Task, gdzie każdy element jest mapowany z danych JSON, a priorytet jest losowo przypisany na podstawie userId, aby dodać różnorodność do danych.
 
           return Task(
+            id:
+                json['id']?.toString() ??
+                DateTime.now().millisecondsSinceEpoch.toString(),
             title: (json['todo'] ?? '').toString(),
             deadline: json['due']?.toString() ?? 'brak',
             priority: priorityFromUserId(userId),
